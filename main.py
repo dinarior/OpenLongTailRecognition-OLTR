@@ -9,8 +9,9 @@ from utils import source_import
 # ================
 # LOAD CONFIGURATIONS
 
-data_root = {'ImageNet': '/home/public/public_dataset/ILSVRC2014/Img',
-             'Places': '/home/public/dataset/Places365'}
+data_root = {'ImageNet': '/vilsrv-storage/imagenet/ILSVRC/Data/CLS-LOC',
+             'Places': '/home/public/dataset/Places365',
+             'Trax':'/vilsrv-storage/open_set_trax/lt_data'}
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--config', default='./config/Imagenet_LT/Stage_1.py', type=str)
