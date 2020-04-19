@@ -43,12 +43,14 @@ class MetaEmbedding_Classifier(nn.Module):
         concept_selector = concept_selector.tanh() 
         x = reachability * (direct_feature + concept_selector * memory_feature)
 
+        full_emmbeddings = x
+
         # storing infused feature
         infused_feature = concept_selector * memory_feature
         
         logits = self.cosnorm_classifier(x)
 
-        return logits, [direct_feature, infused_feature]
+        return logits, [direct_feature, infused_feature, full_emmbeddings]
     
 def create_model(feat_dim=2048, num_classes=1000, stage1_weights=False, dataset=None, test=False, *args):
     print('Loading Meta Embedding Classifier.')

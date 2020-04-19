@@ -115,7 +115,7 @@ class model ():
                                               gamma=self.scheduler_params['gamma'])
         return optimizer, scheduler
 
-    def batch_forward (self, inputs, labels=None, centroids=False, feature_ext=False, phase='train'):
+    def batch_forward (self, inputs, labels=None, centroids=False, feature_ext=False, phase='train', embeddings = False):
         '''
         This is a general single batch running function. 
         '''
@@ -127,7 +127,7 @@ class model ():
         if not feature_ext:
 
             # During training, calculate centroids if needed to 
-            if phase != 'test':
+            if phase != 'test' and embeddings == False:
                 if centroids and 'FeatureLoss' in self.criterions.keys():
                     self.centroids = self.criterions['FeatureLoss'].centroids.data
                 else:
@@ -255,8 +255,7 @@ class model ():
                 
         print('Done')
 
-    def eval(self, phase='val', openset=False):
-
+    def eval(self, phase='val', openset=False, embeddings=False):
         print_str = ['Phase: %s' % (phase)]
         print_write(print_str, self.log_file)
         time.sleep(0.25)
@@ -274,6 +273,10 @@ class model ():
         self.total_logits = torch.empty((0, self.training_opt['num_classes'])).to(self.device)
         self.total_labels = torch.empty(0, dtype=torch.long).to(self.device)
         self.total_paths = np.empty(0)
+        if embeddings:
+            self.total_emb_full = torch.empty((0, self.training_opt['feature_dim'])).to(self.device)
+            self.total_emb_direct = torch.empty((0, self.training_opt['feature_dim'])).to(self.device)
+            self.total_emb_infused = torch.empty((0, self.training_opt['feature_dim'])).to(self.device)
 
         # Iterate over dataset
         for inputs, labels, paths in tqdm(self.data[phase]):
@@ -285,10 +288,16 @@ class model ():
                 # In validation or testing
                 self.batch_forward(inputs, labels, 
                                    centroids=self.memory['centroids'],
-                                   phase=phase)
+                                   phase=phase,
+                                   embeddings=embeddings)
                 self.total_logits = torch.cat((self.total_logits, self.logits))
                 self.total_labels = torch.cat((self.total_labels, labels))
                 self.total_paths = np.concatenate((self.total_paths, paths))
+                if embeddings:
+                    self.total_emb_full = torch.cat((self.total_emb_full, self.direct_memory_feature[2]))
+                    self.total_emb_direct = torch.cat((self.total_emb_direct, self.direct_memory_feature[0]))
+                    self.total_emb_infused = torch.cat((self.total_emb_infused, self.direct_memory_feature[1]))
+
 
         probs, preds = F.softmax(self.total_logits.detach(), dim=1).max(dim=1)
 
@@ -400,3 +409,18 @@ class model ():
                  logits=self.total_logits.detach().cpu().numpy(), 
                  labels=self.total_labels.detach().cpu().numpy(),
                  paths=self.total_paths)
+
+    def output_embeddings(self, phase='test'):
+        filename = os.path.join(self.training_opt['log_dir'], 
+                                'embeddings_%s'%(phase))
+        print("Saving embeddings to: %s.npz" % filename)
+        np.savez(filename, 
+                 full_emb=self.total_emb_full.detach().cpu().numpy(),
+                 direct_emb=self.total_emb_direct.detach().cpu().numpy(), 
+                 infused_emb=self.total_emb_full.detach().cpu().numpy(),  
+                 labels=self.total_labels.detach().cpu().numpy(),
+                 paths=self.total_paths)
+
+
+
+
