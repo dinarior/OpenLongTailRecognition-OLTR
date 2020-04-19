@@ -61,7 +61,7 @@ def load_data(data_root, dataset, phase, batch_size, sampler_dic=None, num_worke
 
     print('Loading data from %s' % (txt))
 
-    if phase not in ['train', 'val']:
+    if phase not in ['train', 'val'] or test_open:
         transform = data_transforms['test']
     else:
         transform = data_transforms[phase]
