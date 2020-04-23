@@ -9,7 +9,7 @@ from utils import source_import
 # ================
 # LOAD CONFIGURATIONS
 
-data_root = {'ImageNet': '/media/dinari/Transcend/imagenet/ILSVRC/Data/CLS-LOC',
+data_root = {'ImageNet': '/vilsrv-storage/imagenet/ILSVRC/Data/CLS-LOC',
              'Places': '/home/public/dataset/Places365',
              'Trax':'/vilsrv-storage/open_set_trax/lt_data'}
 
