@@ -64,3 +64,12 @@ open_file.close()
 
 
 print("blob")
+
+
+
+
+
+def change_to_open(open_file,cur_file):
+    for line in cur_file.readlines():
+        l = line.split()        
+        open_file.write(l[0] + " -1\n")

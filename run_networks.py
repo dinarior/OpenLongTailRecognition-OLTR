@@ -132,7 +132,7 @@ class model ():
                     self.centroids = self.criterions['FeatureLoss'].centroids.data
                 else:
                     self.centroids = None
-
+            # print(self.centroids)
             # Calculate logits with classifier
             self.logits, self.direct_memory_feature = self.networks['classifier'](self.features, self.centroids)
 
@@ -311,10 +311,12 @@ class model ():
         probs, preds = F.softmax(self.total_logits.detach(), dim=1).max(dim=1)
 
         if openset:
-            preds[probs < self.training_opt['open_threshold']] = -1
-            self.openset_acc = mic_acc_cal(preds[self.total_labels == -1],
-                                            self.total_labels[self.total_labels == -1])
-            print('\n\nOpenset Accuracy: %.3f' % self.openset_acc)
+            neg_sample = probs[self.total_labels == -1].cpu().numpy()
+            pos_samples = probs[self.total_labels != -1].cpu().numpy()
+            for t in np.arange(0.1,1,0.005):
+                self.openset_acc = float(np.sum(neg_sample < t)) / len(neg_sample)
+                self.openset_pos_acc= float(np.sum(pos_samples >= t)) / len(pos_samples)
+                print('\n Threshold: %.3f Openset Accuracy: %.3f Inset Accuarcy: %.3f' % (t, self.openset_acc,self.openset_pos_acc))
 
         # Calculate the overall accuracy and F measurement
         self.eval_acc_mic_top1= mic_acc_cal(preds[self.total_labels != -1],
@@ -373,8 +375,9 @@ class model ():
                     centroids[label] += self.features[i]
 
         # Average summed features with class count
+        # centroids /= torch.tensor(class_count(data, num_of_classes=self.training_opt['num_classes'] )).float().unsqueeze(1).cuda()
         centroids /= torch.tensor(class_count(data)).float().unsqueeze(1).cuda()
-
+        # print(centroids)
         return centroids
 
     def load_model(self):
@@ -389,6 +392,7 @@ class model ():
         model_state = checkpoint['state_dict_best']
         
         self.centroids = checkpoint['centroids'] if 'centroids' in checkpoint else None
+        print('centroids' in checkpoint)
         
         for key, model in self.networks.items():
 
