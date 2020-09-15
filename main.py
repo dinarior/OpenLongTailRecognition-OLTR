@@ -5,13 +5,29 @@ from data import dataloader
 from run_networks import model
 import warnings
 from utils import source_import
+import torch
+from datasets.dataset import FGVC_aircraft
+from torch.utils.data import Dataset, DataLoader, ConcatDataset
+
+
+
+
+
+
+
+
+
+
+
+
 
 # ================
 # LOAD CONFIGURATIONS
 
 data_root = {'ImageNet': '/media/dinari/Transcend/imagenet/ILSVRC/Data/CLS-LOC',
              'Places': '/home/public/dataset/Places365',
-             'Trax':'/vilsrv-storage/open_set_trax/lt_data'}
+             'Trax':'/vilsrv-storage/open_set_trax/lt_data',
+             'FGVC':'blob'}
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--config', default='./config/Imagenet_LT/Stage_1.py', type=str)
@@ -50,11 +66,30 @@ if not test_mode:
     else:
         sampler_dic = None
 
-    data = {x: dataloader.load_data(data_root=data_root[dataset.rstrip('_LT')], dataset=dataset, phase=x, 
-                                    batch_size=training_opt['batch_size'],
-                                    sampler_dic=sampler_dic,
-                                    num_workers=training_opt['num_workers'])
-            for x in (['train', 'val', 'train_plain'] if relatin_opt['init_centroids'] else ['train', 'val'])}
+
+    if dataset == 'FGVC':
+        train_dataset = FGVC_aircraft(input_size=224, root='/ninja/fgvc-aircraft-2013b', is_train=True)
+        if sampler_dic:
+            train_loader =  DataLoader(dataset=train_dataset, batch_size=training_opt['batch_size'], shuffle=False,
+                            sampler=sampler_dic['sampler'](train_dataset, sampler_dic['num_samples_cls']),
+                            num_workers=training_opt['num_workers'])
+        else:
+            print('No sampler.')
+            train_loader =  DataLoader(dataset=train_dataset, batch_size=training_opt['batch_size'], shuffle=True,
+                num_workers=training_opt['num_workers'])
+        train_plain =  DataLoader(dataset=train_dataset, batch_size=training_opt['batch_size'], shuffle=True,
+            num_workers=training_opt['num_workers'])
+        test_dataset = FGVC_aircraft(input_size=224, root='/ninja/fgvc-aircraft-2013b', is_train=False)
+        test_loader =  DataLoader(dataset=test_dataset, batch_size=training_opt['batch_size'], shuffle=True,
+                num_workers=training_opt['num_workers'])
+        data = {'train':train_loader,'val':test_loader,'train_plain':train_plain}
+
+    else:
+        data = {x: dataloader.load_data(data_root=data_root[dataset.rstrip('_LT')], dataset=dataset, phase=x, 
+                                        batch_size=training_opt['batch_size'],
+                                        sampler_dic=sampler_dic,
+                                        num_workers=training_opt['num_workers'])
+                for x in (['train', 'val', 'train_plain'] if relatin_opt['init_centroids'] else ['train', 'val'])}
 
     training_model = model(config, data, test=False)
 
