@@ -5,7 +5,7 @@ training_opt = {}
 training_opt['dataset'] = 'Trax_LT'
 training_opt['log_dir'] = './logs/Trax_LT/stage1'
 training_opt['num_classes'] = 1285
-training_opt['batch_size'] = 128
+training_opt['batch_size'] = 256
 training_opt['num_workers'] = 8
 training_opt['num_epochs'] = 60
 training_opt['display_step'] = 10
@@ -16,10 +16,10 @@ training_opt['scheduler_params'] = {'step_size': 10, 'gamma': 0.1}
 config['training_opt'] = training_opt
 
 networks = {}
-feature_param = {'use_modulatedatt': False, 'use_fc': True, 'dropout': None,
+feature_param = {'use_modulatedatt': False, 'use_fc': False, 'dropout': None,
                  'stage1_weights': False, 'dataset': training_opt['dataset']}
 feature_optim_param = {'lr': 0.1, 'momentum': 0.9, 'weight_decay': 0.0005}
-networks['feat_model'] = {'def_file': './models/ResNet50Feature.py',
+networks['feat_model'] = {'def_file': './models/ResNet10Feature.py',
                           'params': feature_param,
                           'optim_params': feature_optim_param,
                           'fix': False}

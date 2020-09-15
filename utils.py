@@ -99,11 +99,15 @@ def mic_acc_cal(preds, labels):
     acc_mic_top1 = (preds == labels).sum().item() / len(labels)
     return acc_mic_top1
 
-def class_count (data):
+def class_count (data,num_of_classes=None):
     labels = np.array(data.dataset.labels)
     class_data_num = []
-    for l in np.unique(labels):
-        class_data_num.append(len(labels[labels == l]))
+    if num_of_classes == None:
+        for l in np.unique(labels):
+            class_data_num.append(len(labels[labels == l]))
+    else:
+        for l in range(num_of_classes):
+            class_data_num.append(max(len(labels[labels == l]),1))
     return class_data_num
 
 # def dataset_dist (in_loader):

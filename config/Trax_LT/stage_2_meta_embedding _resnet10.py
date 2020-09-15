@@ -5,7 +5,7 @@ training_opt = {}
 training_opt['dataset'] = 'Trax_LT'
 training_opt['log_dir'] = './logs/Trax_LT/meta_embedding'
 training_opt['num_classes'] = 1285
-training_opt['batch_size'] = 128
+training_opt['batch_size'] = 256
 training_opt['num_workers'] = 8
 training_opt['num_epochs'] = 60
 training_opt['display_step'] = 10
@@ -20,7 +20,7 @@ networks = {}
 feature_param = {'use_modulatedatt': True, 'use_fc': True, 'dropout': None,
                  'stage1_weights': True, 'dataset': training_opt['dataset']}
 feature_optim_param = {'lr': 0.01, 'momentum': 0.9, 'weight_decay': 0.0005}
-networks['feat_model'] = {'def_file': './models/ResNet50Feature.py',
+networks['feat_model'] = {'def_file': './models/ResNet10Feature.py',
                           'params': feature_param,
                           'optim_params': feature_optim_param,
                           'fix': False}

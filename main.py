@@ -24,7 +24,8 @@ from torch.utils.data import Dataset, DataLoader, ConcatDataset
 # ================
 # LOAD CONFIGURATIONS
 
-data_root = {'ImageNet': '/media/dinari/Transcend/imagenet/ILSVRC/Data/CLS-LOC',
+data_root = {'ImageNet': '/vilsrv-storage/datasets/imagenet',
+             'ImageNetFull': '/vilsrv-storage/datasets/imagenet', 
              'Places': '/home/public/dataset/Places365',
              'Trax':'/vilsrv-storage/open_set_trax/lt_data',
              'FGVC':'blob'}

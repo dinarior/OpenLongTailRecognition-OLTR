@@ -1,18 +1,18 @@
 import numpy as np
 from dataloader import LT_Dataset
 
-DATA_ROOT= '/media/dinari/Transcend/imagenet/ILSVRC/Data/CLS-LOC'
+DATA_ROOT= '/vilsrv-storage/open_set_trax/lt_data'
 
 
-TRAIN_PATH = '/home/dinari/research/OpenLongTailRecognition-OLTR/data/ImageNet_LT/ImageNet_LT_train.txt'
-VAL_PATH = '/home/dinari/research/OpenLongTailRecognition-OLTR/data/ImageNet_LT/ImageNet_LT_val.txt'
-TEST_PATH = '/home/dinari/research/OpenLongTailRecognition-OLTR/data/ImageNet_LT/ImageNet_LT_test.txt'
+TRAIN_PATH = '/home/dinari/OpenLongTailRecognition-OLTR/data/Trax_LT/Trax_LT_train.txt'
+VAL_PATH = '/home/dinari/OpenLongTailRecognition-OLTR/data/Trax_LT/Trax_LT_val.txt'
+TEST_PATH = '/home/dinari/OpenLongTailRecognition-OLTR/data/Trax_LT/Trax_LT_test.txt'
 
 
-TRAIN_PATH_NEW = '/home/dinari/research/OpenLongTailRecognition-OLTR/data/ImageNet_LT/ImageNet_LT_train2.txt'
-VAL_PATH_NEW = '/home/dinari/research/OpenLongTailRecognition-OLTR/data/ImageNet_LT/ImageNet_LT_val2.txt'
-TEST_PATH_NEW = '/home/dinari/research/OpenLongTailRecognition-OLTR/data/ImageNet_LT/ImageNet_LT_test2.txt'
-OPEN_PATH_NEW = '/home/dinari/research/OpenLongTailRecognition-OLTR/data/ImageNet_LT/ImageNet_LT_open2.txt'
+TRAIN_PATH_NEW = '/home/dinari/OpenLongTailRecognition-OLTR/data/Trax_LT/Trax_LT_train2.txt'
+VAL_PATH_NEW = '/home/dinari/OpenLongTailRecognition-OLTR/data/Trax_LT/Trax_LT_val2.txt'
+TEST_PATH_NEW = '/home/dinari/OpenLongTailRecognition-OLTR/data/Trax_LT/Trax_LT_test2.txt'
+OPEN_PATH_NEW = '/home/dinari/OpenLongTailRecognition-OLTR/data/Trax_LT/Trax_LT_open2.txt'
 
 
 
@@ -64,3 +64,12 @@ open_file.close()
 
 
 print("blob")
+
+
+
+
+
+def change_to_open(open_file,cur_file):
+    for line in cur_file.readlines():
+        l = line.split()        
+        open_file.write(l[0] + " -1\n")

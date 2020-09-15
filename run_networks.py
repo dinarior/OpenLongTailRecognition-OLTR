@@ -132,7 +132,7 @@ class model ():
                     self.centroids = self.criterions['FeatureLoss'].centroids.data
                 else:
                     self.centroids = None
-
+            # print(self.centroids)
             # Calculate logits with classifier
             self.logits, self.direct_memory_feature = self.networks['classifier'](self.features, self.centroids)
 
@@ -177,6 +177,7 @@ class model ():
         best_model_weights['classifier'] = copy.deepcopy(self.networks['classifier'].state_dict())
         best_acc = 0.0
         best_epoch = 0
+        self.save_model(0,best_epoch,best_model_weights,best_acc,None)
 
         end_epoch = self.training_opt['num_epochs']
 
@@ -244,6 +245,10 @@ class model ():
                 best_centroids = copy.deepcopy(self.centroids)
                 best_model_weights['feat_model'] = copy.deepcopy(self.networks['feat_model'].state_dict())
                 best_model_weights['classifier'] = copy.deepcopy(self.networks['classifier'].state_dict())
+                if epoch % 5 == 0:
+                    self.save_model(epoch,best_epoch,best_model_weights,best_acc,best_centroids)
+
+
 
         print()
         print('Training Complete.')
@@ -274,10 +279,12 @@ class model ():
         self.total_labels = torch.empty(0, dtype=torch.long).to(self.device)
         self.total_paths = np.empty(0)
         if embeddings:
-            self.total_emb_full = torch.empty((0, self.training_opt['feature_dim']))
-            self.total_emb_direct = torch.empty((0, self.training_opt['feature_dim']))
-            self.total_emb_infused = torch.empty((0, self.training_opt['feature_dim']))
-
+            cur_index = 0
+            self.total_emb_full = torch.empty((len(self.data[phase].dataset), self.training_opt['feature_dim']))
+            self.total_emb_direct = torch.empty((len(self.data[phase].dataset), self.training_opt['feature_dim']))
+            self.total_emb_infused = torch.empty((len(self.data[phase].dataset), self.training_opt['feature_dim']))
+            print(self.total_emb_full.shape)
+        
         # Iterate over dataset
         for inputs, labels, paths in tqdm(self.data[phase]):
             inputs, labels = inputs.to(self.device), labels.to(self.device)
@@ -293,19 +300,23 @@ class model ():
                 self.total_logits = torch.cat((self.total_logits, self.logits))
                 self.total_labels = torch.cat((self.total_labels, labels))
                 self.total_paths = np.concatenate((self.total_paths, paths))
-                if embeddings:
-                    self.total_emb_full = torch.cat((self.total_emb_full, self.direct_memory_feature[2].cpu()))
-                    self.total_emb_direct = torch.cat((self.total_emb_direct, self.direct_memory_feature[0].cpu()))
-                    self.total_emb_infused = torch.cat((self.total_emb_infused, self.direct_memory_feature[1].cpu()))
+                if embeddings:            
+                    new_index = cur_index + len(labels)                    
+                    self.total_emb_full[cur_index:new_index] = self.direct_memory_feature[2].cpu()
+                    self.total_emb_direct[cur_index:new_index] = self.direct_memory_feature[0].cpu()
+                    self.total_emb_infused[cur_index:new_index] = self.direct_memory_feature[1].cpu()
+                    cur_index = new_index
 
 
         probs, preds = F.softmax(self.total_logits.detach(), dim=1).max(dim=1)
 
         if openset:
-            preds[probs < self.training_opt['open_threshold']] = -1
-            self.openset_acc = mic_acc_cal(preds[self.total_labels == -1],
-                                            self.total_labels[self.total_labels == -1])
-            print('\n\nOpenset Accuracy: %.3f' % self.openset_acc)
+            neg_sample = probs[self.total_labels == -1].cpu().numpy()
+            pos_samples = probs[self.total_labels != -1].cpu().numpy()
+            for t in np.arange(0.1,1,0.005):
+                self.openset_acc = float(np.sum(neg_sample < t)) / len(neg_sample)
+                self.openset_pos_acc= float(np.sum(pos_samples >= t)) / len(pos_samples)
+                print('\n Threshold: %.3f Openset Accuracy: %.3f Inset Accuarcy: %.3f' % (t, self.openset_acc,self.openset_pos_acc))
 
         # Calculate the overall accuracy and F measurement
         self.eval_acc_mic_top1= mic_acc_cal(preds[self.total_labels != -1],
@@ -364,8 +375,9 @@ class model ():
                     centroids[label] += self.features[i]
 
         # Average summed features with class count
+        # centroids /= torch.tensor(class_count(data, num_of_classes=self.training_opt['num_classes'] )).float().unsqueeze(1).cuda()
         centroids /= torch.tensor(class_count(data)).float().unsqueeze(1).cuda()
-
+        # print(centroids)
         return centroids
 
     def load_model(self):
@@ -380,6 +392,7 @@ class model ():
         model_state = checkpoint['state_dict_best']
         
         self.centroids = checkpoint['centroids'] if 'centroids' in checkpoint else None
+        print('centroids' in checkpoint)
         
         for key, model in self.networks.items():
 
@@ -395,6 +408,11 @@ class model ():
                 'state_dict_best': best_model_weights,
                 'best_acc': best_acc,
                 'centroids': centroids}
+        if self.model_optimizer:
+                model_states['model_optimizer'] = self.model_optimizer
+
+        if self.criterion_optimizer:
+                model_states['criterion_optimizer'] = self.criterion_optimizer
 
         model_dir = os.path.join(self.training_opt['log_dir'], 
                                  'final_model_checkpoint.pth')
