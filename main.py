@@ -28,6 +28,7 @@ data_root = {'ImageNet': '/vilsrv-storage/datasets/imagenet',
              'ImageNetFull': '/vilsrv-storage/datasets/imagenet', 
              'Places': '/home/public/dataset/Places365',
              'Trax':'/vilsrv-storage/open_set_trax/lt_data',
+             'TraxNew':'/vilsrv-storage/tnuva_take_two',
              'FGVC':'blob'}
 
 parser = argparse.ArgumentParser()
